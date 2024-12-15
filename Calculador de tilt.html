@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').then((reg) => {
+            console.log('Service Worker registrado', reg);
+        });
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Antena Tilt</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        header {
+            background-color: #1b24de;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1f1f1f;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 1);
+            border-radius: 10px;
+        }
+
+        h2, h3 {
+            color: #1b24de;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #1b24de;
+        }
+
+        input {
+            width: 95%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            font-size: 1rem;
+            background-color: #333;
+            color: #e0e0e0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            color: white;
+            background-color: #1b24de;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #1565c0;
+        }
+
+        .result {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            color: #90caf9;
+            font-weight: bold;
+        }
+
+        .reference-image {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .reference-image img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #444;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #1b24de;
+            color: white;
+        }
+
+        .side-by-side {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .calculation-box {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+            background: #1f1f1f;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Calculadora de Tilt</h1>
+    </header>
+
+    <div class="container">
+        <h2>Introduce los datos:</h2>
+        <div class="side-by-side">
+            <div class="calculation-box">
+                <h3>1. Calculo de Tilt (Teta M)</h3>
+                <label for="y">Altura (Y en m):</label>
+                <input type="number" id="y" placeholder="Ejemplo: 23.0">
+
+                <label for="xu">Distancia maxima (Xu en m):</label>
+                <input type="number" id="xu" placeholder="Ejemplo: 600.0">
+
+                <label for="vbm">Vertical BeamWidth (VBM en grados):</label>
+                <input type="number" id="vbm" placeholder="Ejemplo: 9.4">
+
+                <button onclick="calcularTilt()">Calcular</button>
+
+                <div class="result">
+                    <p>Middle Tilt (Teta M): <span id="tetaM"></span> ° </p>
+                    <p>Upper Tilt (Teta U): <span id="tetaU"></span>  ° </p>
+                    <p>Lower Tilt (Teta L): <span id="tetaL"></span>  ° </p>
+                </div>
+            </div>
+
+            <div class="calculation-box">
+                <h3>2. Calculo de Distancia Maxima (Xu)</h3>
+                <label for="y2">Altura (Y en m):</label>
+                <input type="number" id="y2" placeholder="Ejemplo: 23.0">
+
+                <label for="vbm2">Vertical BeamWidth (VBM en grados):</label>
+                <input type="number" id="vbm2" placeholder="Ejemplo: 9.4">
+
+                <label for="tetaM2">Middle Tilt (Teta M en grados):</label>
+                <input type="number" id="tetaM2" placeholder="Ejemplo: 3.0">
+
+                <button onclick="calcularXu()">Calcular</button>
+
+                <div class="result">
+                    <p>Distancia Maxima (Xu): <span id="xuResult"></span> m</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="reference-image">
+            <h3>Referencia de Calculo</h3>
+            <img src="F:\Antena Tilt Calculador\ico-512.jpg" alt="Diagrama de c�lculo de tilt">
+        </div>
+    </div>
+
+    <footer>
+        <p>� 2024 Calculadora de Tilt. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        function calcularTilt() {
+            const y = parseFloat(document.getElementById('y').value);
+            const xu = parseFloat(document.getElementById('xu').value);
+            const vbm = parseFloat(document.getElementById('vbm').value);
+
+            if (isNaN(y) || isNaN(xu) || isNaN(vbm) || y <= 0 || xu <= 0 || vbm <= 0) {
+                alert("Por favor, ingresa valores validos para Y, Xu y VBM.");
+                return;
+            }
+
+            const tetaM = Math.atan(y / xu) * (180 / Math.PI);
+            const tetaU = tetaM - (vbm / 2);
+            const tetaL = tetaM + (vbm / 2);
+
+            document.getElementById('tetaM').innerText = tetaM.toFixed(2);
+            document.getElementById('tetaU').innerText = tetaU.toFixed(2);
+            document.getElementById('tetaL').innerText = tetaL.toFixed(2);
+        }
+
+        function calcularXu() {
+            const y = parseFloat(document.getElementById('y2').value);
+            const tetaM = parseFloat(document.getElementById('tetaM2').value);
+
+            if (isNaN(y) || isNaN(tetaM) || y <= 0 || tetaM <= 0) {
+                alert("Por favor, ingresa valores validos para Y y Teta M.");
+                return;
+            }
+
+            const tetaMRad = tetaM * (Math.PI / 180);
+            const xu = y / Math.tan(tetaMRad);
+
+            document.getElementById('xuResult').innerText = xu.toFixed(2);
+        }
+    </script>
+</body>
+</html>
